@@ -1,0 +1,19 @@
+﻿{
+  "contacts": [
+    {
+      "name": "Alex",
+      "phone": "15551234567",
+      "notes": "Colleague"
+    },
+    {
+      "name": "Mom",
+      "phone": "15559876543",
+      "notes": "Family"
+    },
+    {
+      "name": "David",
+      "phone": "15550001122",
+      "notes": "Project Partner"
+    }
+  ]
+}
