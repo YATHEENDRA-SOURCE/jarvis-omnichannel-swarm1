@@ -1,0 +1,36 @@
+﻿# Core & AI Orchestration
+google-genai>=2.0.0
+pydantic>=2.6.0
+pydantic-settings>=2.2.0
+python-dotenv>=1.0.1
+rich>=13.7.1
+
+# Browser & Web Automation
+playwright>=1.42.0
+
+# Desktop GUI, Window Management & Vision
+pyautogui>=0.9.54
+pygetwindow>=0.0.9
+pyperclip>=1.9.0
+mss>=9.0.1
+pillow>=10.0.0
+pywebview>=5.0.0
+keyboard>=0.13.5
+psutil>=5.9.0
+
+# Audio & Speech
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.14
+pyttsx3>=2.90
+
+# Windows System & Hardware APIs
+pywin32>=306
+pycaw>=20240101
+comtypes>=1.2.0
+
+# Android ADB Automation
+adbutils>=2.11.0
+
+# Document & File Processing
+python-docx>=1.1.0
+requests>=2.31.0

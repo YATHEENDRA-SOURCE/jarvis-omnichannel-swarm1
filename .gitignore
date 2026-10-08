@@ -1,0 +1,32 @@
+﻿# System & Secrets (NEVER COMMIT)
+.env
+.env.local
+contacts.json
+
+# Browser Persistent Data & Authentication Cookies
+.whatsapp_session/
+.instagram_session/
+.gmail_session/
+
+# Virtual Environment & Python Caches
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Temporary Capture & Artifacts
+screenshots/
+ps_screen.png
+
+# Generated User Documents
+documents/
+notes/
+workspace/
+
+# IDE & OS Specific
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+*.log
