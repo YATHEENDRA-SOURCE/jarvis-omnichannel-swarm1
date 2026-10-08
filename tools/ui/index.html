@@ -1,0 +1,1197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S. CORE V0.1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #000000;
+      --cyan: #00f0ff;
+      --cyan-dim: #0099b8;
+      --blue: #1a6fff;
+      --green: #00ff88;
+      --red: #ff3344;
+      --amber: #ff9900;
+      --gold: #ffd700;
+      --purple: #bf5af2;
+      --text: #c8e6f0;
+      --dim: #4a7585;
+      --border-hud: rgba(0, 240, 255, 0.22);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 50% 45%, rgba(0, 80, 180, 0.12) 0%, transparent 65%),
+        linear-gradient(rgba(0, 240, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 36px 36px, 36px 36px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* SUBTLE SCANLINES */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 240, 255, 0.012) 2px, rgba(0, 240, 255, 0.012) 4px);
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* TOP HEADER & TITLE BANNER */
+    .top-strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 18px 4px 18px;
+      background: rgba(0, 0, 0, 0.95);
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+      font-size: 11px;
+    }
+    .top-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .loc-tag { color: var(--cyan); letter-spacing: 1px; }
+
+    .core-title-box {
+      border: 1px solid var(--amber);
+      padding: 2px 14px;
+      background: rgba(255, 153, 0, 0.06);
+      border-radius: 2px;
+      box-shadow: 0 0 10px rgba(255, 153, 0, 0.25);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: var(--cyan);
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+    }
+    .core-title-box span { color: var(--amber); margin-right: 4px; }
+
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .clock-text { color: var(--cyan); letter-spacing: 2px; font-weight: 600; }
+    .auto-voice-badge {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      padding: 2px 7px;
+      border: 1px solid var(--green);
+      color: var(--green);
+      border-radius: 2px;
+      letter-spacing: 1px;
+      animation: pulseGreen 2s infinite;
+      cursor: pointer;
+    }
+    @keyframes pulseGreen {
+      0%, 100% { box-shadow: 0 0 4px rgba(0, 255, 136, 0.3); opacity: 0.85; }
+      50% { box-shadow: 0 0 12px rgba(0, 255, 136, 0.8); opacity: 1; }
+    }
+
+    /* TOP AGENT MATRIX CARDS */
+    .agent-matrix {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      padding: 6px 14px;
+      background: rgba(0, 3, 10, 0.92);
+      border-bottom: 1px solid var(--border-hud);
+    }
+
+    .agent-card-hud {
+      background: rgba(4, 10, 20, 0.85);
+      border: 1px solid var(--border-hud);
+      border-radius: 3px;
+      padding: 6px 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .agent-card-hud:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+      border-color: var(--cyan);
+    }
+    .agent-card-hud.active-agent {
+      box-shadow: 0 0 14px rgba(0, 240, 255, 0.45);
+      border-color: var(--cyan);
+      background: rgba(0, 240, 255, 0.08);
+    }
+
+    .agent-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3px;
+    }
+    .agent-name {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--cyan);
+    }
+    .agent-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7px;
+      padding: 1px 4px;
+      border-radius: 2px;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
+    .pill-teal { background: rgba(0, 240, 255, 0.15); color: var(--cyan); border: 1px solid var(--cyan); }
+    .pill-cyan { background: rgba(0, 180, 255, 0.15); color: #38bdf8; border: 1px solid #38bdf8; }
+    .pill-blue { background: rgba(26, 111, 255, 0.15); color: #60a5fa; border: 1px solid #60a5fa; }
+    .pill-green { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
+    .pill-red { background: rgba(255, 51, 68, 0.15); color: var(--red); border: 1px solid var(--red); }
+    .pill-magenta { background: rgba(191, 90, 242, 0.15); color: #c084fc; border: 1px solid #c084fc; }
+    .pill-gray { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid #94a3b8; }
+    .pill-gold { background: rgba(255, 215, 0, 0.15); color: var(--gold); border: 1px solid var(--gold); }
+
+    .agent-lines {
+      font-size: 9px;
+      color: var(--dim);
+      line-height: 1.35;
+      font-family: 'Rajdhani', sans-serif;
+    }
+    .agent-lines div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .agent-alert {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+    .agent-card-hud.border-red { border-color: rgba(255, 51, 68, 0.5); }
+    .agent-card-hud.border-magenta { border-color: rgba(191, 90, 242, 0.4); }
+    .agent-card-hud.border-green { border-color: rgba(0, 255, 136, 0.4); }
+
+    /* MAIN VIEWPORT 3-COLUMN */
+    .main-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 210px 1fr 210px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* LEFT SIDEBAR: TELEMETRY & MARKETS */
+    .side-panel {
+      padding: 12px 10px;
+      background: rgba(0, 2, 8, 0.75);
+      border-right: 1px solid var(--border-hud);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+    .side-panel.right-panel {
+      border-right: none;
+      border-left: 1px solid var(--border-hud);
+    }
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: var(--cyan);
+      letter-spacing: 2px;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+      padding-bottom: 3px;
+      margin-bottom: 4px;
+    }
+
+    /* FINANCIAL METRICS */
+    .market-box {
+      background: rgba(0, 10, 25, 0.4);
+      border: 1px solid rgba(0, 240, 255, 0.12);
+      border-radius: 3px;
+      padding: 6px 8px;
+    }
+    .ticker-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+    .ticker-symbol { color: var(--dim); }
+    .ticker-price { color: var(--text); }
+    .ticker-down { color: var(--red); }
+    .ticker-up { color: var(--green); }
+
+    /* SYSTEM STATS */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      padding: 3px 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .stat-label { color: var(--dim); }
+    .stat-val { color: var(--cyan); }
+    .mini-bar {
+      height: 4px;
+      background: rgba(0, 240, 255, 0.1);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 2px;
+      margin-bottom: 6px;
+    }
+    .mini-bar-fill {
+      height: 100%;
+      background: var(--cyan);
+      box-shadow: 0 0 6px var(--cyan);
+    }
+
+    /* CENTER VIEWPORT: THE REACTOR CORE + HUD */
+    .center-hud {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-evenly;
+      padding: 12px 18px 8px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 4 CORNER VIEWFINDER BRACKETS */
+    .hud-bracket {
+      position: absolute;
+      width: 26px;
+      height: 26px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .bracket-tl { top: 10px; left: 10px; border-top: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .bracket-tr { top: 10px; right: 10px; border-top: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+    .bracket-bl { bottom: 10px; left: 10px; border-bottom: 2px solid var(--cyan); border-left: 2px solid var(--cyan); }
+    .bracket-br { bottom: 10px; right: 10px; border-bottom: 2px solid var(--cyan); border-right: 2px solid var(--cyan); }
+
+    /* CENTRAL ARC REACTOR WRAPPER */
+    .reactor-stage {
+      position: relative;
+      width: 270px;
+      height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* TARGETING RETICLE CIRCLES ON TOP RIGHT */
+    .radar-reticle-1 {
+      position: absolute;
+      width: 85px;
+      height: 85px;
+      border: 1px solid rgba(0, 240, 255, 0.4);
+      border-radius: 50%;
+      top: 15px;
+      right: 15px;
+      pointer-events: none;
+    }
+    .radar-reticle-2 {
+      position: absolute;
+      width: 60px;
+      height: 60px;
+      border: 1px dashed rgba(0, 240, 255, 0.3);
+      border-radius: 50%;
+      top: 52px;
+      right: -12px;
+      pointer-events: none;
+      animation: rotateR 8s linear infinite;
+      animation-play-state: paused; /* STABLE WHEN NOT SPEAKING */
+    }
+
+    /* ORBITAL RINGS - STABLE (PAUSED) BY DEFAULT */
+    .orbital-ring {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+      animation-play-state: paused; /* STABLE WHEN NOT SPEAKING */
+    }
+    .ring-outer {
+      width: 240px;
+      height: 240px;
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      animation: rotateR 24s linear infinite;
+      animation-play-state: paused;
+    }
+    .ring-dashed {
+      width: 200px;
+      height: 200px;
+      border: 1px dashed rgba(0, 240, 255, 0.35);
+      animation: rotateL 14s linear infinite;
+      animation-play-state: paused;
+    }
+    .ring-inner {
+      width: 160px;
+      height: 160px;
+      border: 1px solid rgba(26, 111, 255, 0.3);
+      animation: rotateR 9s linear infinite;
+      animation-play-state: paused;
+    }
+    @keyframes rotateR { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes rotateL { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+
+    /* WHEN SPEAKING -> RINGS ROTATE ACTIVELY! */
+    .reactor-stage.rotating .orbital-ring,
+    .reactor-stage.rotating .radar-reticle-2 {
+      animation-play-state: running !important;
+    }
+
+    /* CORE ORB - STABLE CALM GLOW WHEN NOT SPEAKING */
+    .core-orb {
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffffff 0%, #70f3ff 20%, #00c8ff 45%, #0050cc 70%, #001238 90%, #000 100%);
+      box-shadow:
+        0 0 22px rgba(0, 240, 255, 0.7),
+        0 0 55px rgba(0, 160, 255, 0.4),
+        0 0 95px rgba(0, 100, 255, 0.2);
+      z-index: 3;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    /* Dynamic pulsing & intense glow when speaking */
+    .reactor-stage.rotating .core-orb {
+      animation: corePulse 1.6s ease-in-out infinite;
+      box-shadow:
+        0 0 35px rgba(0, 240, 255, 1),
+        0 0 85px rgba(0, 200, 255, 0.8),
+        0 0 150px rgba(0, 120, 255, 0.6);
+    }
+    @keyframes corePulse {
+      0%, 100% {
+        box-shadow: 0 0 25px rgba(0, 240, 255, 0.9), 0 0 65px rgba(0, 160, 255, 0.6), 0 0 115px rgba(0, 100, 255, 0.35);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 45px rgba(0, 240, 255, 1), 0 0 95px rgba(0, 200, 255, 0.8), 0 0 170px rgba(0, 130, 255, 0.5);
+        transform: scale(1.03);
+      }
+    }
+    .core-orb.listening {
+      background: radial-gradient(circle at 35% 35%, #ffffff 0%, #70ffb0 20%, #00ff88 45%, #008855 70%, #002211 90%, #000 100%);
+      box-shadow: 0 0 40px rgba(0, 255, 136, 1), 0 0 95px rgba(0, 255, 136, 0.7);
+    }
+
+    .particle-stars {
+      position: absolute;
+      inset: -40px;
+      z-index: 2;
+    }
+
+    /* TERMINAL CONSOLE */
+    .terminal-box {
+      width: 100%;
+      max-width: 600px;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      background: rgba(0, 4, 12, 0.85);
+      border-radius: 3px;
+      padding: 10px 14px;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .term-head {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      color: var(--dim);
+      letter-spacing: 2px;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+      padding-bottom: 3px;
+      margin-bottom: 6px;
+    }
+    .term-status { color: var(--green); }
+
+    .term-stream {
+      height: 105px;
+      overflow-y: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      line-height: 1.45;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--cyan) transparent;
+    }
+    .log-line { margin-bottom: 4px; word-break: break-word; }
+    .log-jarvis { color: var(--cyan); }
+    .log-jarvis::before { content: '> J.A.R.V.I.S.: '; color: rgba(0, 240, 255, 0.5); }
+    .log-user { color: var(--gold); }
+    .log-user::before { content: '> YOU: '; color: rgba(255, 215, 0, 0.5); }
+    .log-sys { color: var(--green); font-size: 10px; }
+
+    /* INPUT ROW */
+    .cmd-bar {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-top: 6px;
+    }
+    .cmd-input-field {
+      flex: 1;
+      background: rgba(0, 240, 255, 0.03);
+      border: 1px solid rgba(0, 240, 255, 0.28);
+      border-radius: 2px;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .cmd-input-field:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+    }
+    .cmd-input-field::placeholder { color: var(--dim); font-size: 11px; }
+
+    .btn-send {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 0 14px;
+      height: 31px;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-send:hover {
+      background: rgba(0, 240, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+    }
+
+    .btn-mic-red {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 9px;
+      letter-spacing: 1px;
+      padding: 0 10px;
+      height: 31px;
+      background: rgba(255, 51, 68, 0.15);
+      border: 1px solid var(--red);
+      color: var(--red);
+      border-radius: 2px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-mic-red.listening {
+      background: rgba(0, 255, 136, 0.25);
+      border-color: var(--green);
+      color: var(--green);
+      box-shadow: 0 0 18px var(--green);
+    }
+
+    /* 3 COLORED BOTTOM BUTTONS */
+    .quick-actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .action-btn {
+      flex: 1;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 8.5px;
+      letter-spacing: 1px;
+      padding: 5px 6px;
+      background: transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .btn-green-border { border: 1px solid var(--green); color: var(--green); }
+    .btn-green-border:hover { background: rgba(0, 255, 136, 0.15); box-shadow: 0 0 10px var(--green); }
+    .btn-gold-border { border: 1px solid var(--gold); color: var(--gold); }
+    .btn-gold-border:hover { background: rgba(255, 215, 0, 0.15); box-shadow: 0 0 10px var(--gold); }
+    .btn-amber-border { border: 1px solid var(--amber); color: var(--amber); }
+    .btn-amber-border:hover { background: rgba(255, 153, 0, 0.15); box-shadow: 0 0 10px var(--amber); }
+
+    /* RIGHT SIDEBAR: SUITE & NEWS TICKER */
+    .service-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 11px;
+    }
+    .service-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8px;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+    .tag-online { background: rgba(0, 255, 136, 0.15); color: var(--green); border: 1px solid var(--green); }
+    .tag-standby { background: rgba(255, 153, 0, 0.15); color: var(--amber); border: 1px solid var(--amber); }
+
+    .news-box {
+      background: rgba(0, 8, 20, 0.5);
+      border: 1px solid rgba(0, 240, 255, 0.12);
+      border-radius: 3px;
+      padding: 6px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9.5px;
+      color: var(--dim);
+      line-height: 1.5;
+    }
+    .news-box div { margin-bottom: 4px; border-left: 2px solid var(--cyan); padding-left: 6px; }
+
+    /* BOTTOM SPECTRUM ANALYZER & HARDWARE TELEMETRY */
+    .bottom-telemetry-bar {
+      height: 48px;
+      background: rgba(0, 2, 8, 0.95);
+      border-top: 1px solid var(--border-hud);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+    }
+    .wave-canvas-wrap {
+      flex: 1;
+      max-width: 420px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+    }
+    #spectrumCanvas {
+      width: 100%;
+      height: 32px;
+    }
+    .telemetry-metrics {
+      display: flex;
+      gap: 22px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+    }
+    .metric-item { display: flex; flex-direction: column; align-items: center; }
+    .metric-num { color: var(--cyan); font-weight: 700; font-size: 12px; }
+    .metric-label { color: var(--dim); font-size: 8px; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP STRIP -->
+  <div class="top-strip">
+    <div class="top-left">
+      <span>LOC:</span>
+      <span class="loc-tag">MUMBAI • LOCAL_NODE</span>
+      <span>|</span>
+      <span>SECURITY:</span>
+      <span style="color: var(--green);">OWNER_LOCKED</span>
+    </div>
+
+    <div class="core-title-box">
+      <span>//</span> J·A·R·V·I·S  CORE  V0.1
+    </div>
+
+    <div class="top-right">
+      <span class="clock-text" id="hudClock">00:00:00</span>
+      <span class="auto-voice-badge" id="voiceStatusBadge" onclick="triggerVoice()">🎙️ VOICE: ALWAYS ON</span>
+    </div>
+  </div>
+
+  <!-- TOP AGENT MATRIX CARDS (8 UNITS LIKE THE VIDEO) -->
+  <div class="agent-matrix">
+    <!-- STARK -->
+    <div class="agent-card-hud" data-agent="stark" onclick="filterAgent('stark', 'S.T.A.R.K.')">
+      <div class="agent-head">
+        <span class="agent-name">S.T.A.R.K.</span>
+        <span class="agent-pill pill-teal">PRESIDENTIAL</span>
+      </div>
+      <div class="agent-lines">
+        <div>APEX pipeline active</div>
+        <div>TN diagnostics: P&L</div>
+        <div class="agent-alert">VS CODE READY</div>
+      </div>
+    </div>
+
+    <!-- THE VISION -->
+    <div class="agent-card-hud" data-agent="vision" onclick="filterAgent('vision', 'T.H.E. V.I.S.I.O.N.')">
+      <div class="agent-head">
+        <span class="agent-name">THE VISION</span>
+        <span class="agent-pill pill-cyan">INTELLIGENCE</span>
+      </div>
+      <div class="agent-lines">
+        <div>Neural landscape</div>
+        <div>System synthesis</div>
+        <div class="agent-alert">2 TASKS NOMINAL</div>
+      </div>
+    </div>
+
+    <!-- ULTRON -->
+    <div class="agent-card-hud" data-agent="ultron" onclick="filterAgent('ultron', 'U.L.T.R.O.N.')">
+      <div class="agent-head">
+        <span class="agent-name">ULTRON</span>
+        <span class="agent-pill pill-blue">SECURITY</span>
+      </div>
+      <div class="agent-lines">
+        <div>IPS monitoring active</div>
+        <div>Hardware & Wi-Fi ctrl</div>
+        <div class="agent-alert">VOLUME: 50%</div>
+      </div>
+    </div>
+
+    <!-- FRIDAY -->
+    <div class="agent-card-hud active-agent" data-agent="friday" onclick="filterAgent('friday', 'F.R.I.D.A.Y.')">
+      <div class="agent-head">
+        <span class="agent-name">FRIDAY</span>
+        <span class="agent-pill pill-green">ACTIVE</span>
+      </div>
+      <div class="agent-lines">
+        <div>WhatsApp · Calls · Gmail</div>
+        <div>Next: Evening 19:30</div>
+        <div class="agent-alert" style="color: var(--green);">TELEPHONY LIVE</div>
+      </div>
+    </div>
+
+    <!-- VERONICA -->
+    <div class="agent-card-hud border-red" data-agent="veronica" onclick="filterAgent('veronica', 'V.E.R.O.N.I.C.A.')">
+      <div class="agent-head">
+        <span class="agent-name">VERONICA</span>
+        <span class="agent-pill pill-red">TACTICAL</span>
+      </div>
+      <div class="agent-lines">
+        <div>Lock: APEX mismatch</div>
+        <div>Swarm override auto</div>
+        <div class="agent-alert" style="color: var(--red);">DEPLOY READY</div>
+      </div>
+    </div>
+
+    <!-- JOCASTA -->
+    <div class="agent-card-hud border-magenta" data-agent="jocasta" onclick="filterAgent('jocasta', 'J.O.C.A.S.T.A.')">
+      <div class="agent-head">
+        <span class="agent-name">JOCASTA</span>
+        <span class="agent-pill pill-magenta">KNOWLEDGE</span>
+      </div>
+      <div class="agent-lines">
+        <div>Notes · Word reports</div>
+        <div>Live global weather</div>
+        <div class="agent-alert">RESEARCH SYNC</div>
+      </div>
+    </div>
+
+    <!-- RHODEY -->
+    <div class="agent-card-hud" data-agent="rhodey" onclick="filterAgent('rhodey', 'R.H.O.D.E.Y.')">
+      <div class="agent-head">
+        <span class="agent-name">RHODEY</span>
+        <span class="agent-pill pill-gray">STANDBY</span>
+      </div>
+      <div class="agent-lines">
+        <div>Android ADB mobile</div>
+        <div>War Machine control</div>
+        <div class="agent-alert">ADB READY</div>
+      </div>
+    </div>
+
+    <!-- EDITH -->
+    <div class="agent-card-hud border-green" data-agent="edith" onclick="filterAgent('edith', 'E.D.I.T.H.')">
+      <div class="agent-head">
+        <span class="agent-name">E.D.I.T.H.</span>
+        <span class="agent-pill pill-gold">EYES ON</span>
+      </div>
+      <div class="agent-lines">
+        <div>Screen vision AI</div>
+        <div>Auto-click & form fill</div>
+        <div class="agent-alert" style="color: var(--green);">EYES ONLINE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN BODY (3 COLUMNS) -->
+  <div class="main-body">
+
+    <!-- LEFT PANEL: TELEMETRY & MARKETS -->
+    <div class="side-panel">
+      <div class="section-tag">// FINANCIAL INTEL</div>
+      <div class="market-box">
+        <div class="ticker-row">
+          <span class="ticker-symbol">BTC/USD</span>
+          <span class="ticker-price ticker-down">$76,781 -4.82%</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-symbol">ETH/USD</span>
+          <span class="ticker-price ticker-down">$2,289 -3.12%</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-symbol">STARK IND</span>
+          <span class="ticker-price ticker-up">$3,120 +1.45%</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-symbol">TECH GLB</span>
+          <span class="ticker-price ticker-up">$54.26 +0.80%</span>
+        </div>
+      </div>
+
+      <div class="section-tag">// SYSTEM TELEMETRY</div>
+      <div class="stat-row">
+        <span class="stat-label">CPU CORE:</span>
+        <span class="stat-val" id="cpuStat">32%</span>
+      </div>
+      <div class="mini-bar"><div class="mini-bar-fill" style="width: 32%;"></div></div>
+
+      <div class="stat-row">
+        <span class="stat-label">MEMORY:</span>
+        <span class="stat-val">14.2 GB / 32 GB</span>
+      </div>
+      <div class="mini-bar"><div class="mini-bar-fill" style="width: 44%;"></div></div>
+
+      <div class="stat-row">
+        <span class="stat-label">NETWORK:</span>
+        <span class="stat-val">128 MB/S</span>
+      </div>
+      <div class="mini-bar"><div class="mini-bar-fill" style="width: 70%;"></div></div>
+
+      <div class="section-tag">// BIOMETRICS</div>
+      <div class="stat-row">
+        <span class="stat-label">SPEAKER LOCK:</span>
+        <span class="stat-val" style="color: var(--green);">OWNER</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">VOICEPRINT:</span>
+        <span class="stat-val">ENROLLED</span>
+      </div>
+      <button onclick="enrollVoice()" style="margin-top:4px; font-family:'Orbitron',sans-serif; font-size:8px; padding:4px; background:transparent; border:1px solid rgba(0,240,255,0.2); color:var(--dim); cursor:pointer;">RE-ENROLL VOICEPRINT</button>
+    </div>
+
+    <!-- CENTER HUD: ARC REACTOR + CONSOLE -->
+    <div class="center-hud">
+      <!-- 4 CAMERA VIEWFINDER BRACKETS -->
+      <div class="hud-bracket bracket-tl"></div>
+      <div class="hud-bracket bracket-tr"></div>
+      <div class="hud-bracket bracket-bl"></div>
+      <div class="hud-bracket bracket-br"></div>
+
+      <!-- CENTRAL ARC REACTOR (STABLE WHEN SILENT, ROTATING WHEN SPEAKING) -->
+      <div class="reactor-stage" id="reactorStage">
+        <canvas class="particle-stars" id="particleCanvas" width="350" height="320"></canvas>
+        <div class="radar-reticle-1"></div>
+        <div class="radar-reticle-2"></div>
+        <div class="orbital-ring ring-outer"></div>
+        <div class="orbital-ring ring-dashed"></div>
+        <div class="orbital-ring ring-inner"></div>
+        <div class="core-orb" id="reactorOrb" onclick="triggerVoice()" title="Say 'JARVIS' or speak anytime!"></div>
+      </div>
+
+      <!-- TERMINAL CONSOLE (NO NOW PLAYING BAR) -->
+      <div class="terminal-box">
+        <div class="term-head">
+          <span>ALL INPUT MATRIX</span>
+          <span class="term-status" id="hudStatus">STANDBY • ALL PROTOCOLS NOMINAL</span>
+        </div>
+
+        <div class="term-stream" id="termStream">
+          <div class="log-line log-jarvis">Online and standing by, Sir. The 6-Agent Swarm is fully armed. VisionAgent is watching your screen. Just say 'JARVIS' anytime — no clicking needed.</div>
+          <div class="log-line log-sys">[ SWARM: F.R.I.D.A.Y., U.L.T.R.O.N., S.T.A.R.K., J.O.C.A.S.T.A., R.H.O.D.E.Y., E.D.I.T.H. READY ]</div>
+        </div>
+
+        <div class="cmd-bar">
+          <input type="text" class="cmd-input-field" id="cmdInput" placeholder="Type command here or simply say 'JARVIS'..." onkeydown="if(event.key==='Enter') executeCommand();">
+          <button class="btn-send" onclick="executeCommand()">SEND</button>
+          <button class="btn-mic-red" id="micBtn" onclick="triggerVoice()" title="Say 'JARVIS' anytime!">
+            <span style="font-size:12px;">●</span> MIC
+          </button>
+        </div>
+
+        <div class="quick-actions-row">
+          <button class="action-btn btn-green-border" onclick="quickAction('analyze my screen and describe what is visible')">
+            📷 CAM SCAN
+          </button>
+          <button class="action-btn btn-gold-border" onclick="quickAction('agents assemble')">
+            ⚡ HERCULES
+          </button>
+          <button class="action-btn btn-amber-border" onclick="quickAction('what is on my screen and give me a brief')">
+            📋 BRIEF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: SUITE DIAGNOSTICS & NEWS -->
+    <div class="side-panel right-panel">
+      <div class="section-tag">// SUITE DIAGNOSTICS</div>
+
+      <div class="service-badge-row">
+        <span>💬 WhatsApp Web</span>
+        <span class="service-tag tag-online" id="waStatus">LINKED</span>
+      </div>
+
+      <div class="service-badge-row">
+        <span>📱 Android Phone</span>
+        <span class="service-tag tag-online" id="adbStatus">ADB READY</span>
+      </div>
+
+      <div class="service-badge-row">
+        <span>👁️ Edith Screen</span>
+        <span class="service-tag tag-online">ONLINE</span>
+      </div>
+
+      <div class="service-badge-row">
+        <span>💻 VS Code (Stark)</span>
+        <span class="service-tag tag-online">READY</span>
+      </div>
+
+      <div class="service-badge-row">
+        <span>📧 Gmail Web</span>
+        <span class="service-tag tag-online">READY</span>
+      </div>
+
+      <div class="service-badge-row">
+        <span>📷 Instagram</span>
+        <span class="service-tag tag-standby">STANDBY</span>
+      </div>
+
+      <div class="section-tag" style="margin-top:10px;">// LIVE NEWS FEED</div>
+      <div class="news-box">
+        <div>GLOBAL MARKETS: TECH INDEX +1.8%</div>
+        <div>CYBER SECURITY: ALL ENCRYPTION KEYS ROTATED</div>
+        <div>SWARM MEMORY BUFFER: 20 TURNS ACTIVE</div>
+        <div>WAKE LISTENER: ALWAYS LISTENING (SAY 'JARVIS')</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM SPECTRUM ANALYZER & HARDWARE TELEMETRY -->
+  <div class="bottom-telemetry-bar">
+    <div class="wave-canvas-wrap">
+      <canvas id="spectrumCanvas" width="420" height="32"></canvas>
+    </div>
+
+    <div class="telemetry-metrics">
+      <div class="metric-item">
+        <span class="metric-num">40</span>
+        <span class="metric-label">CPU</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-num">500M</span>
+        <span class="metric-label">FREQ</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-num">15k</span>
+        <span class="metric-label">RAM</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-num">98.3%</span>
+        <span class="metric-label">EFFICIENCY</span>
+      </div>
+      <div class="metric-item">
+        <span class="metric-num" id="uptimeCounter">00:08:47</span>
+        <span class="metric-label">UPTIME</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Live Clock & Uptime
+    let startTime = Date.now();
+    function updateHUDClock() {
+      const now = new Date();
+      document.getElementById('hudClock').textContent = now.toTimeString().slice(0, 8);
+
+      const diff = Math.floor((Date.now() - startTime) / 1000);
+      const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+      const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+      const s = String(diff % 60).padStart(2, '0');
+      document.getElementById('uptimeCounter').textContent = `${h}:${m}:${s}`;
+    }
+    setInterval(updateHUDClock, 1000);
+    updateHUDClock();
+
+    // ROTATION & VOICE ACTIVITY CONTROLLER
+    let isSpeaking = false;
+    let silenceTimer = null;
+
+    function setRotatingState(active) {
+      const stage = document.getElementById('reactorStage');
+      const orb = document.getElementById('reactorOrb');
+      const micBtn = document.getElementById('micBtn');
+      const status = document.getElementById('hudStatus');
+
+      isSpeaking = active;
+      if (active) {
+        stage.classList.add('rotating');
+        orb.classList.add('listening');
+        if (micBtn) micBtn.classList.add('listening');
+        if (status && (status.textContent.includes('STANDBY') || status.textContent.includes('VOICE ACTIVE'))) {
+          status.textContent = "VOICE ACTIVE • ROTATION ENGAGED";
+        }
+      } else {
+        stage.classList.remove('rotating');
+        orb.classList.remove('listening');
+        if (micBtn) micBtn.classList.remove('listening');
+        if (status && status.textContent.includes('ROTATION ENGAGED')) {
+          status.textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+        }
+      }
+    }
+
+    // Python Bridge hooks for hands-free rotation & audio sync
+    window.onListeningStarted = function() {
+      setRotatingState(true);
+      const status = document.getElementById('hudStatus');
+      if (status) status.textContent = "LISTENING TO SIR...";
+    };
+
+    window.onListeningEnded = function() {
+      setRotatingState(false);
+      const status = document.getElementById('hudStatus');
+      if (status) status.textContent = "PROCESSING INSTRUCTION...";
+    };
+
+    window.onJarvisSpeaking = function(speaking) {
+      setRotatingState(speaking);
+      const status = document.getElementById('hudStatus');
+      if (status) {
+        status.textContent = speaking ? "J.A.R.V.I.S. VOCALIZING..." : "STANDBY • ALL PROTOCOLS NOMINAL";
+      }
+    };
+
+    // Append to Terminal Log
+    function appendTerminal(sender, text, isUser = false) {
+      const stream = document.getElementById('termStream');
+      const line = document.createElement('div');
+      line.className = `log-line ${isUser ? 'log-user' : 'log-jarvis'}`;
+      line.textContent = text;
+      stream.appendChild(line);
+      stream.scrollTop = stream.scrollHeight;
+      while (stream.children.length > 50) stream.removeChild(stream.firstChild);
+    }
+
+    // Execute User Command
+    async function executeCommand() {
+      const input = document.getElementById('cmdInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendTerminal('YOU', text, true);
+      input.value = '';
+      document.getElementById('hudStatus').textContent = "SWARM ORCHESTRATING INSTRUCTION...";
+      setRotatingState(true);
+
+      if (window.pywebview) {
+        try {
+          const res = await window.pywebview.api.execute_command(text);
+          appendTerminal('J.A.R.V.I.S.', res.reply || "Command executed, Sir.");
+        } catch (e) {
+          appendTerminal('J.A.R.V.I.S.', "Error: " + e);
+        } finally {
+          setRotatingState(false);
+          document.getElementById('hudStatus').textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+        }
+      } else {
+        setTimeout(() => {
+          setRotatingState(false);
+          document.getElementById('hudStatus').textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+        }, 1200);
+      }
+    }
+
+    function quickAction(cmd) {
+      document.getElementById('cmdInput').value = cmd;
+      executeCommand();
+    }
+
+    function filterAgent(id, name) {
+      document.querySelectorAll('.agent-card-hud').forEach(c => c.classList.remove('active-agent'));
+      const target = document.querySelector(`.agent-card-hud[data-agent="${id}"]`) || (event ? event.currentTarget : null);
+      if (target) target.classList.add('active-agent');
+      document.getElementById('cmdInput').value = name + ', ';
+      document.getElementById('cmdInput').focus();
+    }
+
+    // Programmatic Agent Switcher callable from Python Bridge
+    window.selectAgentTab = function(agentKey) {
+      const key = (agentKey || '').toLowerCase().trim();
+      document.querySelectorAll('.agent-card-hud').forEach(c => c.classList.remove('active-agent'));
+      const targetCard = document.querySelector(`.agent-card-hud[data-agent="${key}"]`);
+      if (targetCard) {
+        targetCard.classList.add('active-agent');
+        const names = {
+          'friday': 'F.R.I.D.A.Y.',
+          'ultron': 'U.L.T.R.O.N.',
+          'stark': 'S.T.A.R.K.',
+          'jocasta': 'J.O.C.A.S.T.A.',
+          'rhodey': 'R.H.O.D.E.Y.',
+          'edith': 'E.D.I.T.H.',
+          'vision': 'THE VISION',
+          'veronica': 'VERONICA'
+        };
+        const label = names[key] || key.toUpperCase();
+        document.getElementById('cmdInput').value = label + ', ';
+        document.getElementById('hudStatus').textContent = `ACTIVE UNIT: ${label}`;
+        appendTerminal('SYSTEM', `// Switched active unit focus to [ ${label} ]`);
+      }
+    };
+
+    // Voice Interaction Trigger
+    async function triggerVoice() {
+      if (isSpeaking) return;
+      setRotatingState(true);
+      document.getElementById('hudStatus').textContent = "LISTENING FOR VOICE COMMAND...";
+
+      if (window.pywebview) {
+        try {
+          const res = await window.pywebview.api.listen_and_execute();
+          if (res.transcription) {
+            appendTerminal('YOU', res.transcription, true);
+          }
+          appendTerminal('J.A.R.V.I.S.', res.reply || "Done, Sir.");
+        } catch (e) {
+          appendTerminal('J.A.R.V.I.S.', "Voice Error: " + e);
+        } finally {
+          setRotatingState(false);
+          document.getElementById('hudStatus').textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+        }
+      } else {
+        setTimeout(() => {
+          setRotatingState(false);
+          document.getElementById('hudStatus').textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+        }, 1800);
+      }
+    }
+
+    // Callbacks from Python Wake Word Thread
+    window.onWakeWordDetected = function() {
+      setRotatingState(true);
+      document.getElementById('hudStatus').textContent = "WAKE WORD DETECTED • LISTENING TO SIR...";
+    };
+
+    window.onBackgroundCommandExecuted = function(instruction, reply) {
+      appendTerminal('YOU', instruction, true);
+      appendTerminal('J.A.R.V.I.S.', reply, false);
+      setRotatingState(false);
+      document.getElementById('hudStatus').textContent = "STANDBY • ALL PROTOCOLS NOMINAL";
+      // Optional browser TTS fallback if system audio didn't play
+      if (window.speechSynthesis && (!window.pywebview || !reply.includes("Execution error"))) {
+        try {
+          const clean = reply.replace(/[*#_`>]/g, ' ').slice(0, 200);
+          const utt = new SpeechSynthesisUtterance(clean);
+          utt.rate = 1.05;
+          utt.onstart = () => setRotatingState(true);
+          utt.onend = () => setRotatingState(false);
+          // Only speak if pywebview is not directly running native audio
+          // window.speechSynthesis.speak(utt);
+        } catch(e) {}
+      }
+    };
+
+    function enrollVoice() {
+      if (window.pywebview) {
+        window.pywebview.api.enroll_user_voice();
+      }
+    }
+
+    // Particle Stars Around Reactor (STABLE WHEN SILENT, ROTATING WHEN SPEAKING)
+    const pc = document.getElementById('particleCanvas');
+    const pctx = pc.getContext('2d');
+    const stars = [];
+    const cx = pc.width / 2, cy = pc.height / 2;
+    for (let i = 0; i < 32; i++) {
+      stars.push({
+        angle: (i / 32) * Math.PI * 2,
+        r: 65 + Math.random() * 80,
+        speed: 0.004 + Math.random() * 0.006,
+        size: 1.2 + Math.random() * 1.8,
+        alpha: 0.35 + Math.random() * 0.55
+      });
+    }
+
+    function drawParticles() {
+      pctx.clearRect(0, 0, pc.width, pc.height);
+      // ONLY advance angles if actively speaking! Otherwise particles remain STABLE!
+      if (isSpeaking) {
+        stars.forEach(s => {
+          s.angle += s.speed;
+        });
+      }
+      stars.forEach(s => {
+        const x = cx + Math.cos(s.angle) * s.r;
+        const y = cy + Math.sin(s.angle) * s.r;
+        pctx.beginPath();
+        pctx.arc(x, y, s.size, 0, Math.PI * 2);
+        pctx.fillStyle = `rgba(0, 240, 255, ${isSpeaking ? s.alpha : s.alpha * 0.35})`;
+        pctx.fill();
+      });
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // Spectrum Equalizer Canvas
+    const sc = document.getElementById('spectrumCanvas');
+    const sctx = sc.getContext('2d');
+    const bars = 52;
+
+    function drawSpectrum() {
+      sctx.clearRect(0, 0, sc.width, sc.height);
+      const w = sc.width / bars;
+      const t = Date.now() * 0.005;
+
+      for (let i = 0; i < bars; i++) {
+        let h;
+        if (isSpeaking) {
+          // Dynamic wave pulsing when speaking
+          h = Math.abs(Math.sin(i * 0.35 + t * 2)) * 24 + 4;
+        } else {
+          // STABLE, CALM IDLE SPECTRUM
+          h = Math.abs(Math.sin(i * 0.2 + t * 0.3)) * 4 + 2;
+        }
+
+        const grad = sctx.createLinearGradient(0, sc.height, 0, sc.height - h);
+        if (isSpeaking) {
+          grad.addColorStop(0, '#00ff88');
+          grad.addColorStop(1, '#70ffb0');
+        } else {
+          grad.addColorStop(0, '#00f0ff');
+          grad.addColorStop(1, '#0060cc');
+        }
+        sctx.fillStyle = grad;
+        sctx.fillRect(i * w + 1, sc.height - h, w - 2, h);
+      }
+      requestAnimationFrame(drawSpectrum);
+    }
+    drawSpectrum();
+
+    // Hotkey: Ctrl+Space to trigger voice anytime
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.code === 'Space') {
+        e.preventDefault();
+        triggerVoice();
+      }
+    });
+  </script>
+</body>
+</html>
